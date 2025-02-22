@@ -1,29 +1,34 @@
-import React from 'react'
-import { currentUser } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/prisma';
+import Navbar from "@/components/home/header/navbar";
+import { prisma } from "@/lib/prisma";
+import { currentUser } from "@clerk/nextjs/server";
+import React from "react";
 
-const layout = async({children}:{children:React.ReactNode}) => {
-    const user = await currentUser();
+const Layout = async ({ children }: { children: React.ReactNode }) => {
+  const user = await currentUser();
 
-    if(!user) return null;
-
+  if (user) {
     const loggedInUser = await prisma.user.findUnique({
-        where:{clerkUserId:user.id},
+      where: { clerkUserId: user.id },
     });
 
-    if(!loggedInUser){
-        await prisma.user.create({
-            data:{
-                name:user.fullName as string,
-                clerkUserId:user.id,
-                email:user.emailAddresses[0].emailAddress,
-                imageUrl:user.imageUrl,
-            },
-        });
+    if (!loggedInUser) {
+      await prisma.user.create({
+        data: {
+          name: `${user.fullName ?? ""} ${user.lastName ?? ""}`.trim(),
+          clerkUserId: user.id,
+          email: user.emailAddresses[0]?.emailAddress ?? "",
+          imageUrl: user.imageUrl,
+        },
+      });
     }
-  return (
-    <div>{children}</div>
-  )
-}
+  }
 
-export default layout;
+  return (
+    <div>
+      <Navbar />
+      {children}
+    </div>
+  );
+};
+
+export default Layout;
